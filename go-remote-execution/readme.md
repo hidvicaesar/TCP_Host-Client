@@ -5,13 +5,13 @@
 ![Protocol](https://img.shields.io/badge/Protocol-TCP%20%2F%20JSON-orange)
 ![Concurrency](https://img.shields.io/badge/Concurrency-Goroutines%20%2B%20Atomic-brightgreen)
 
-Implementasi sistem *client-server* berbasis *Transmission Control Protocol* (TCP) menggunakan bahasa pemrograman Go dengan arsitektur multi-koneksi konkuren (*goroutine-driven*) untuk mengeksekusi perintah diagnostik sistem operasi secara jarak jauh (*remote execution*). Sistem dirancang khusus untuk eksekusi *native* pada lingkungan Windows dengan proteksi *command whitelisting*, pembatasan batas waktu eksekusi (*timeout*), serta pertukaran data terstruktur berformat JSON.
+Implementasi sistem _client-server_ berbasis _Transmission Control Protocol_ (TCP) menggunakan bahasa pemrograman Go dengan arsitektur multi-koneksi konkuren (_goroutine-driven_) untuk mengeksekusi perintah diagnostik sistem operasi secara jarak jauh (_remote execution_). Sistem dirancang khusus untuk eksekusi _native_ pada lingkungan Windows dengan proteksi _command whitelisting_, pembatasan batas waktu eksekusi (_timeout_), serta pertukaran data terstruktur berformat JSON.
 
 ---
 
 ## 📐 Arsitektur Sistem
 
-Sistem menggunakan model konkurensi M:N berbasis *Goroutine*. *Main thread server* bertindak sebagai *listener* pasif yang mendelegasikan setiap sesi koneksi masuk ke *worker goroutine* terpisah, sehingga mampu melayani banyak *client* secara simultan tanpa *blocking*.
+Sistem menggunakan model konkurensi M:N berbasis _Goroutine_. _Main thread server_ bertindak sebagai _listener_ pasif yang mendelegasikan setiap sesi koneksi masuk ke _worker goroutine_ terpisah, sehingga mampu melayani banyak _client_ secara simultan tanpa _blocking_.
 
 ```mermaid
 graph TD
@@ -28,13 +28,13 @@ graph TD
     subgraph ServerEngine ["Go Server Engine"]
         LST["TCP Listener\n(net.Listen)"]
         ATM["Atomic Counter\n(sync/atomic.AddUint64)"]
-        
+
         subgraph Workers ["Concurrent Goroutines"]
             G1["Goroutine Worker 1\n[CLIENT 1]"]
             G2["Goroutine Worker 2\n[CLIENT 2]"]
             G3["Goroutine Worker 3\n[CLIENT 3]"]
         end
-        
+
         subgraph Security ["Security & Execution Pipeline"]
             VAL{"Command Whitelist\n& OS Validation"}
             CTX["context.WithTimeout\n(10s Limit)"]
@@ -66,7 +66,7 @@ graph TD
 
 ## 🔄 Alur Komunikasi & Protokol (Sequence Diagram)
 
-Pertukaran data memanfaatkan abstraksi *streaming* `json.Encoder` dan `json.Decoder` langsung di atas aliran *socket* TCP (`net.Conn`):
+Pertukaran data memanfaatkan abstraksi _streaming_ `json.Encoder` dan `json.Decoder` langsung di atas aliran _socket_ TCP (`net.Conn`):
 
 ```mermaid
 sequenceDiagram
@@ -105,12 +105,12 @@ sequenceDiagram
 
 ## ✨ Fitur Utama
 
-* **Concurrent Multi-Client Handling:** Menggunakan *goroutine* ringan untuk melayani koneksi banyak *client* secara paralel tanpa membebani sumber daya sistem operasi.
-* **Thread-Safe Client Identification:** Menggunakan `sync/atomic.AddUint64` untuk menjamin keunikan penomoran ID *client* (`CLIENT 1`, `CLIENT 2`, dst.) bebas dari kondisi *race condition*.
-* **Command Whitelisting:** Perlindungan terhadap ancaman *remote arbitrary command execution* dengan membatasi eksekusi hanya pada perintah yang terdaftar.
-* **Execution Timeout Safeguard:** Pembatasan waktu proses sub-sistem selama maksimal 10 detik via `context.WithTimeout` guna mencegah proses macet (*hang*).
-* **OS-Specific Guardrail:** Pengecekan otomatis variabel `runtime.GOOS` untuk memastikan utilitas diagnostik Windows (`ipconfig` dan `systeminfo`) hanya dieksekusi pada lingkungan yang sesuai.
-* **Standardized JSON Framing:** Menggunakan objek `Request` dan `Response` terstruktur dengan tag `omitempty` untuk meminimalkan ukuran transmisi data.
+- **Concurrent Multi-Client Handling:** Menggunakan _goroutine_ ringan untuk melayani koneksi banyak _client_ secara paralel tanpa membebani sumber daya sistem operasi.
+- **Thread-Safe Client Identification:** Menggunakan `sync/atomic.AddUint64` untuk menjamin keunikan penomoran ID _client_ (`CLIENT 1`, `CLIENT 2`, dst.) bebas dari kondisi _race condition_.
+- **Command Whitelisting:** Perlindungan terhadap ancaman _remote arbitrary command execution_ dengan membatasi eksekusi hanya pada perintah yang terdaftar.
+- **Execution Timeout Safeguard:** Pembatasan waktu proses sub-sistem selama maksimal 10 detik via `context.WithTimeout` guna mencegah proses macet (_hang_).
+- **OS-Specific Guardrail:** Pengecekan otomatis variabel `runtime.GOOS` untuk memastikan utilitas diagnostik Windows (`ipconfig` dan `systeminfo`) hanya dieksekusi pada lingkungan yang sesuai.
+- **Standardized JSON Framing:** Menggunakan objek `Request` dan `Response` terstruktur dengan tag `omitempty` untuk meminimalkan ukuran transmisi data.
 
 ---
 
@@ -129,13 +129,13 @@ go-remote-execution/
 
 ## 📋 Daftar Perintah yang Diizinkan
 
-| Perintah | Target Eksekusi | Batasan Platform | Deskripsi Fungsional |
-| :--- | :--- | :--- | :--- |
-| `hostname` | `hostname.exe` | Lintas Platform | Mengambil dan menampilkan nama *host* komputer *server*. |
-| `whoami` | `whoami.exe` | Lintas Platform | Menampilkan identitas akun pengguna (*username*) Windows aktif pada *server*. |
-| `ipconfig` | `ipconfig.exe` | `windows` only | Menampilkan konfigurasi antarmuka jaringan dan alamat IPv4/IPv6 *server*. |
-| `systeminfo` | `systeminfo.exe` | `windows` only | Menampilkan rincian konfigurasi sistem operasi dan spesifikasi perangkat. |
-| `exit` | *Internal CLI* | Lintas Platform | Memutuskan sesi koneksi TCP dan menutup program *client*. |
+| Perintah     | Target Eksekusi  | Batasan Platform | Deskripsi Fungsional                                                          |
+| :----------- | :--------------- | :--------------- | :---------------------------------------------------------------------------- |
+| `hostname`   | `hostname.exe`   | Lintas Platform  | Mengambil dan menampilkan nama _host_ komputer _server_.                      |
+| `whoami`     | `whoami.exe`     | Lintas Platform  | Menampilkan identitas akun pengguna (_username_) Windows aktif pada _server_. |
+| `ipconfig`   | `ipconfig.exe`   | `windows` only   | Menampilkan konfigurasi antarmuka jaringan dan alamat IPv4/IPv6 _server_.     |
+| `systeminfo` | `systeminfo.exe` | `windows` only   | Menampilkan rincian konfigurasi sistem operasi dan spesifikasi perangkat.     |
+| `exit`       | _Internal CLI_   | Lintas Platform  | Memutuskan sesi koneksi TCP dan menutup program _client_.                     |
 
 > **Catatan Keamanan:** Perintah di luar daftar di atas (misalnya `dir`, `rmdir`, `powershell`, atau upaya penyisipan operator chaining `&&`, `|`) akan otomatis ditolak dengan pesan galat `"Perintah tidak diizinkan"`.
 
@@ -144,22 +144,28 @@ go-remote-execution/
 ## 🚀 Panduan Instalasi & Penggunaan
 
 ### Prasyarat Lingkungan
-* Sistem Operasi: Windows 10 / 11 (64-bit)
-* [Go Compiler](https://go.dev/dl/) versi `1.27.3` atau lebih baru
-* Terminal Windows PowerShell atau Command Prompt
+
+- Sistem Operasi: Windows 10 / 11 (64-bit)
+- [Go Compiler](https://go.dev/dl/) versi `1.27.3` atau lebih baru
+- Terminal Windows PowerShell atau Command Prompt
 
 ### 1. Kloning Repositori
+
 ```powershell
 git clone https://github.com/hidvicaesar/TCP_Host-Client.git
 cd TCP_Host-Client/go-remote-execution
 ```
 
 ### 2. Menjalankan Server
+
 Buka terminal PowerShell pertama dan jalankan perintah:
+
 ```powershell
 go run ./server/main.go
 ```
-*Output Terminal Server:*
+
+_Output Terminal Server:_
+
 ```text
 ========================================
        GO REMOTE EXECUTION SERVER
@@ -169,11 +175,15 @@ Menunggu koneksi client...
 ```
 
 ### 3. Menjalankan Client
+
 Buka jendela terminal PowerShell kedua dan jalankan perintah:
+
 ```powershell
 go run ./client/main.go
 ```
-*Output Terminal Client:*
+
+_Output Terminal Client:_
+
 ```text
 ================================
  GO REMOTE EXECUTION CLIENT
@@ -201,7 +211,7 @@ DESKTOP-TELECOM
 
 ## 🧪 Pengujian Konkurensi (3 Client dalam 1 Host)
 
-Pengujian dilakukan untuk membuktikan ketahanan *server* saat menerima koneksi simultan dari tiga *instance client* yang berjalan bersamaan di alamat *loopback* `127.0.0.1:8080`:
+Pengujian dilakukan untuk membuktikan ketahanan _server_ saat menerima koneksi simultan dari tiga _instance client_ yang berjalan bersamaan di alamat _loopback_ `127.0.0.1:8080`:
 
 ```text
 ┌─────────────────────────────────┐   ┌─────────────────────────────────┐
@@ -234,8 +244,9 @@ Pengujian dilakukan untuk membuktikan ketahanan *server* saat menerima koneksi s
 ```
 
 ### Hasil Analisis Konkurensi
-1. **Pemisahan Port Sumber:** Setiap *client* dialokasikan nomor *ephemeral port* independen oleh sistem operasi Windows (misal: `52140`, `52145`, `52151`), mencegah tubrukan paket data.
-2. **Isolasi Eksekusi:** Perintah dengan waktu proses tinggi (`systeminfo` atau `ipconfig`) pada satu *client* tidak memicu kelambatan (*head-of-line blocking*) bagi *client* lain yang menjalankan perintah cepat (`hostname`).
+
+1. **Pemisahan Port Sumber:** Setiap _client_ dialokasikan nomor _ephemeral port_ independen oleh sistem operasi Windows (misal: `52140`, `52145`, `52151`), mencegah tubrukan paket data.
+2. **Isolasi Eksekusi:** Perintah dengan waktu proses tinggi (`systeminfo` atau `ipconfig`) pada satu _client_ tidak memicu kelambatan (_head-of-line blocking_) bagi _client_ lain yang menjalankan perintah cepat (`hostname`).
 3. **Atomic Counting:** Identifikasi terminal terurut secara deterministik (`CLIENT 1`, `CLIENT 2`, `CLIENT 3`) tanpa bentrok nilai variabel bersama.
 
 ---
@@ -243,6 +254,7 @@ Pengujian dilakukan untuk membuktikan ketahanan *server* saat menerima koneksi s
 ## 📦 Spesifikasi Skema Data (JSON Payload)
 
 ### Request (Client -> Server)
+
 ```json
 {
   "command": "whoami"
@@ -250,6 +262,7 @@ Pengujian dilakukan untuk membuktikan ketahanan *server* saat menerima koneksi s
 ```
 
 ### Response (Server -> Client - Berhasil)
+
 ```json
 {
   "command": "whoami",
@@ -258,6 +271,7 @@ Pengujian dilakukan untuk membuktikan ketahanan *server* saat menerima koneksi s
 ```
 
 ### Response (Server -> Client - Ditolak)
+
 ```json
 {
   "command": "dir",
@@ -270,7 +284,7 @@ Pengujian dilakukan untuk membuktikan ketahanan *server* saat menerima koneksi s
 
 ## 👤 Penulis
 
-* **Nama:** Hidvicaesar Ayangfaana Hafidz
-* **NIM:** 4.31.23.1.10
-* **Kelas / No. Absen:** TE-4B / 09
-* **Program Studi:** Sarjana Terapan Teknik Telekomunikasi, Politeknik Negeri Semarang
+- **Nama:** Hidvicaesar Ayangfaana Hafidz
+- **NIM:** 4.31.23.1.10
+- **Kelas / No. Absen:** TE-4B / 09
+- **Program Studi:** Sarjana Terapan Teknik Telekomunikasi, Politeknik Negeri Semarang
